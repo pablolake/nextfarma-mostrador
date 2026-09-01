@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'">
+  <title>NextFarma Mostrador</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="logo-text"><strong>NextFarma</strong> Mostrador</div>
+    <button class="icon-btn" id="btn-config" onclick="mostrarConfig()" title="Cambiar API Key">⚙</button>
+  </header>
+
+  <!-- PANTALLA DE CONFIGURACIÓN — se pide la API Key una vez (no comparte la config del
+       sync-agent normal, ver decisión del titular: cada exe pide su propia clave). -->
+  <section id="pantalla-config" class="pantalla">
+    <div class="form-section">
+      <div class="form-section-title">Configuración</div>
+      <div class="form-hint">Pega la misma API Key que usa NextFarma Sync en esta farmacia (Configuración → API Key, en esa app).</div>
+      <input type="text" class="input" id="cfg-apikey" placeholder="API Key…" autocomplete="off">
+      <div class="form-actions" style="margin-top:10px">
+        <button class="btn btn-primary" onclick="guardarConfig()">Guardar y conectar</button>
+      </div>
+      <div id="config-result" class="result-msg" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- PANTALLA MOSTRADOR — única función de la app: buscar un CN o nombre y ver su grupo
+       publicitario con el semáforo de margen, igual que en NextFarma Sync. -->
+  <section id="pantalla-mostrador" class="pantalla" style="display:none">
+    <div class="tenant-bar" id="tenant-bar"></div>
+
+    <div class="mostrador-search-wrap">
+      <input type="text" class="input" id="mostrador-q" placeholder="CN o nombre de producto…"
+             oninput="mostradorOnInput()" onfocus="mostradorOnInput()"
+             onblur="setTimeout(() => { document.getElementById('mostrador-resultados').style.display = 'none' }, 150)"
+             autocomplete="off" autofocus>
+      <div class="mostrador-resultados" id="mostrador-resultados" style="display:none"></div>
+    </div>
+
+    <div id="mostrador-estado" class="form-hint" style="margin-top:8px"></div>
+
+    <div id="mostrador-detalle" style="display:none; margin-top:12px">
+      <div class="mostrador-gp-header">
+        <div>
+          <div class="mostrador-gp-nombre" id="mostrador-gp-nombre">—</div>
+          <div class="form-hint" id="mostrador-gp-sub" style="margin-bottom:0"></div>
+        </div>
+      </div>
+
+      <div class="mostrador-legend" id="mostrador-legend">
+        <span><i class="mostrador-dot" style="background:var(--success)"></i> mejor margen</span>
+        <span><i class="mostrador-dot" style="background:var(--warning)"></i> favorito, no el mejor</span>
+        <span><i class="mostrador-dot" style="background:var(--muted)"></i> mejor que el más vendido</span>
+      </div>
+
+      <div id="mostrador-lista"></div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+{
+  "name": "nextfarma-mostrador",
+  "version": "1.0.0",
+  "description": "NextFarma Mostrador — consulta rápida de Grupo Publicitario y márgenes por CN, en una ventana pequeña para el mostrador de la farmacia.",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:win": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac"
+  },
+  "dependencies": {
+    "electron-store": "^7.0.3"
+  },
+  "devDependencies": {
+    "electron": "^42.5.2",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "es.nextfarma.mostrador",
+    "productName": "NextFarma Mostrador",
+    "copyright": "Copyright © 2026 NextFarma",
+    "asar": true,
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "node_modules/**/*",
+      "!node_modules/electron/dist/**",
+      "!node_modules/.cache/**"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "NextFarma-Mostrador-Setup.${ext}"
+    },
+    "mac": {
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "NextFarma-Mostrador-${version}.${ext}",
+      "category": "public.app-category.business"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NextFarma Mostrador"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "pablolake",
+      "repo": "nextfarma-mostrador",
+      "releaseType": "release"
+    },
+    "extraResources": [],
+    "nodeGypRebuild": false,
+    "npmRebuild": false,
+    "buildDependenciesFromSource": false
+  }
+}

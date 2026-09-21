@@ -84,7 +84,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false,
     },
-    title: 'NextFarma Mostrador',
+    title: 'XestFarma Mostrador',
     backgroundColor: '#0f172a',
     show: false,
   });

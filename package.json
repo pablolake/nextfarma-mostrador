@@ -1,6 +1,6 @@
 {
   "name": "nextfarma-mostrador",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "XestFarma Mostrador — consulta rápida de Grupo Publicitario y márgenes por CN, en una ventana pequeña para el mostrador de la farmacia.",
   "private": true,
   "main": "electron/main.js",
@@ -39,7 +39,7 @@
           ]
         }
       ],
-      "artifactName": "NextFarma-Mostrador-Setup.${ext}"
+      "artifactName": "XestFarma-Mostrador-Setup.${ext}"
     },
     "mac": {
       "icon": "build/icon.icns",
@@ -52,7 +52,7 @@
           ]
         }
       ],
-      "artifactName": "NextFarma-Mostrador-${version}.${ext}",
+      "artifactName": "XestFarma-Mostrador-${version}.${ext}",
       "category": "public.app-category.business"
     },
     "nsis": {

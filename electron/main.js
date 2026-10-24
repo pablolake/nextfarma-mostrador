@@ -98,7 +98,8 @@ ipcMain.handle('mostrador-gp', async (_, cn, universo) => {
   try {
     const api = require('../src/api-client');
     const tipo = universo === 'Receta' ? 'receta' : 'publicitarios';
-    const gps = await api.request(`/api/sync/${tipo}/gps?cn=${encodeURIComponent(cn)}`);
+    const ruta = tipo === 'receta' ? '/api/sync/receta/mostrador/gps' : '/api/sync/publicitarios/gps';
+    const gps = await api.request(`${ruta}?cn=${encodeURIComponent(cn)}`);
     return { ok: true, gp: gps[0] || null };
   } catch (err) {
     return { ok: false, error: err.message };

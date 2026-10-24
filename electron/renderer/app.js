@@ -122,7 +122,7 @@ function mostradorColorTier(cn, cns, favoritoCn) {
   if (muFav !== null && muFav !== undefined && cn.mu > muFav) return 'gris';
   return null;
 }
-const MOSTRADOR_DOT_COLOR = { verde: 'var(--success)', amarillo: 'var(--warning)', gris: 'var(--muted)', negro: 'var(--text)' };
+const MOSTRADOR_DOT_COLOR = { verde: 'var(--success)', amarillo: 'var(--warning)', gris: 'var(--muted)', negro: '#020617' };
 
 // Lista de tarjetas en vez de una tabla ancha (CN/Producto/Lab/PVP/Margen/Uds no cabe
 // legible en una ventana de 380px) — cada fila de la tabla original pasa a ser una tarjeta
@@ -141,7 +141,7 @@ function mostradorRenderDetalle(gp) {
       <span><i class="mostrador-dot" style="background:var(--success)"></i> mejor margen</span>
       <span><i class="mostrador-dot" style="background:var(--warning)"></i> segundo margen</span>
       <span><i class="mostrador-dot" style="background:var(--muted)"></i> resto de genéricos</span>
-      <span><i class="mostrador-dot" style="background:var(--text)"></i> favorito sin descuento</span>`;
+      <span><i class="mostrador-dot" style="background:#020617;outline:1px solid var(--muted)"></i> favorito sin descuento</span>`;
   } else {
     document.getElementById('mostrador-legend').innerHTML = `
       <span><i class="mostrador-dot" style="background:var(--success)"></i> mejor margen</span>

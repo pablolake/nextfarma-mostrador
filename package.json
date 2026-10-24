@@ -1,6 +1,6 @@
 {
   "name": "nextfarma-mostrador",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "XestFarma Mostrador — consulta rápida de Grupo Publicitario y márgenes por CN, en una ventana pequeña para el mostrador de la farmacia.",
   "private": true,
   "main": "electron/main.js",

@@ -41,11 +41,8 @@ function showResult(el, msg, kind) {
 }
 
 /* ── Mostrador — búsqueda rápida por CN o nombre, para consultar en el momento (junto a
-   Farmatic ya abierto) qué Grupo Publicitario ocupa un producto y sus alternativas
-   ordenadas por margen, con el mismo semáforo de colores que la app web y NextFarma Sync
-   (verde = mejor margen, amarillo = 2º mejor, gris = mejor que el favorito sin estar en el
-   top 2). Lógica idéntica a electron/renderer/app.js del sync-agent (mostradorColorTier) y a
-   nextfarma-front/src/lib/publicitariosColor.ts (colorTierCn) — mismo criterio, tres sitios. */
+   Farmatic ya abierto) qué grupo de Receta o Publicitarios ocupa un producto y sus alternativas
+   con sus colores y datos básicos, usando los cálculos de la API. */
 let mostradorDebounceTimer = null;
 
 function mostradorFmtEur(n) {
@@ -85,27 +82,27 @@ async function mostradorBuscar(q) {
     return;
   }
   cont.innerHTML = res.resultados.map(r => `
-    <div class="mostrador-resultado-item" onmousedown="mostradorSeleccionar(${r.cn})">
+    <div class="mostrador-resultado-item" onmousedown="mostradorSeleccionar(${r.cn}, '${r.universo}')">
       <div class="mostrador-resultado-nombre">${escapeHtml(r.descripcion)}</div>
-      <div class="mostrador-resultado-sub">${escapeHtml(r.laboratorio || '')} · CN ${r.cn}</div>
+      <div class="mostrador-resultado-sub">${escapeHtml(r.universo)} · ${escapeHtml(r.laboratorio || '')} · CN ${r.cn}</div>
     </div>
   `).join('');
 }
 
-async function mostradorSeleccionar(cn) {
+async function mostradorSeleccionar(cn, universo) {
   document.getElementById('mostrador-resultados').style.display = 'none';
   document.getElementById('mostrador-q').value = '';
   const estado = document.getElementById('mostrador-estado');
   const detalle = document.getElementById('mostrador-detalle');
   estado.textContent = 'Cargando…';
   detalle.style.display = 'none';
-  const res = await window.mostrador.mostradorGp(cn);
+  const res = await window.mostrador.mostradorGp(cn, universo);
   if (!res.ok) {
     estado.textContent = res.error || 'Error al consultar';
     return;
   }
   if (!res.gp) {
-    estado.textContent = 'Este producto no está clasificado en Publicitarios todavía.';
+    estado.textContent = `Este producto no está clasificado en ${universo} todavía.`;
     return;
   }
   estado.textContent = '';
@@ -125,26 +122,41 @@ function mostradorColorTier(cn, cns, favoritoCn) {
   if (muFav !== null && muFav !== undefined && cn.mu > muFav) return 'gris';
   return null;
 }
-const MOSTRADOR_DOT_COLOR = { verde: 'var(--success)', amarillo: 'var(--warning)', gris: 'var(--muted)' };
+const MOSTRADOR_DOT_COLOR = { verde: 'var(--success)', amarillo: 'var(--warning)', gris: 'var(--muted)', negro: 'var(--text)' };
 
 // Lista de tarjetas en vez de una tabla ancha (CN/Producto/Lab/PVP/Margen/Uds no cabe
 // legible en una ventana de 380px) — cada fila de la tabla original pasa a ser una tarjeta
 // de dos líneas.
 function mostradorRenderDetalle(gp) {
   document.getElementById('mostrador-detalle').style.display = '';
-  document.getElementById('mostrador-gp-nombre').textContent = gp.nombre + (gp.es_unico ? ' (único, sin competencia)' : '');
-  const sub = [gp.familia_nombre, gp.subfamilia_nombre].filter(Boolean).join(' › ');
+  document.getElementById('mostrador-gp-nombre').textContent =
+    `${gp.universo || 'Publicitarios'} · ${gp.nombre}` + (gp.es_unico ? ' (único, sin competencia)' : '');
+  const sub = gp.universo === 'Receta'
+    ? `CH ${gp.codigo_grupo}`
+    : [gp.familia_nombre, gp.subfamilia_nombre].filter(Boolean).join(' › ');
   document.getElementById('mostrador-gp-sub').textContent = sub;
   document.getElementById('mostrador-legend').style.display = gp.es_unico ? 'none' : '';
+  if (gp.universo === 'Receta') {
+    document.getElementById('mostrador-legend').innerHTML = `
+      <span><i class="mostrador-dot" style="background:var(--success)"></i> mejor margen</span>
+      <span><i class="mostrador-dot" style="background:var(--warning)"></i> segundo margen</span>
+      <span><i class="mostrador-dot" style="background:var(--muted)"></i> resto de genéricos</span>
+      <span><i class="mostrador-dot" style="background:var(--text)"></i> favorito sin descuento</span>`;
+  } else {
+    document.getElementById('mostrador-legend').innerHTML = `
+      <span><i class="mostrador-dot" style="background:var(--success)"></i> mejor margen</span>
+      <span><i class="mostrador-dot" style="background:var(--warning)"></i> favorito, no el mejor</span>
+      <span><i class="mostrador-dot" style="background:var(--muted)"></i> mejor que el más vendido</span>`;
+  }
 
   const filas = [...gp.cns].sort((a, b) => (b.mu ?? -Infinity) - (a.mu ?? -Infinity));
   document.getElementById('mostrador-lista').innerHTML = filas.map(cn => {
-    const tier = gp.es_unico ? null : mostradorColorTier(cn, gp.cns, gp.favorito_cn);
+    const tier = gp.es_unico ? null : ('color' in cn ? cn.color : mostradorColorTier(cn, gp.cns, gp.favorito_cn));
     const esFav = cn.cn === gp.favorito_cn;
     return `
       <div class="mostrador-cn-card${esFav ? ' es-fav' : ''}">
         <div class="mostrador-cn-card-top">
-          ${tier ? `<i class="mostrador-dot" style="background:${MOSTRADOR_DOT_COLOR[tier]}"></i>` : '<i class="mostrador-dot-hueco"></i>'}
+          ${tier ? `<i class="mostrador-dot" style="background:${MOSTRADOR_DOT_COLOR[tier]};${tier === 'negro' ? 'outline:1px solid var(--muted);' : ''}"></i>` : '<i class="mostrador-dot-hueco"></i>'}
           <span class="mostrador-cn-nombre">${escapeHtml(cn.descripcion)}</span>
           ${esFav ? '<span class="mostrador-badge-fav">FAV</span>' : ''}
         </div>

@@ -1,17 +1,18 @@
 {
   "name": "nextfarma-mostrador",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "XestFarma Mostrador — consulta rápida de Grupo Publicitario y márgenes por CN, en una ventana pequeña para el mostrador de la farmacia.",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build:win": "electron-builder --win --x64",
+    "build:win": "electron-builder --win --x64 --publish never",
     "build:mac": "electron-builder --mac"
   },
   "dependencies": {
-    "electron-store": "^7.0.3"
+    "electron-store": "^7.0.3",
+    "electron-updater": "^6.8.11"
   },
   "devDependencies": {
     "electron": "^42.5.2",

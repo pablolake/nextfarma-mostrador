@@ -1,8 +1,9 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path  = require('path');
 const Store = require('electron-store');
+const { autoUpdater } = require('electron-updater');
 
 const API_BASE = process.env.OVERRIDE_API_BASE || 'https://api-production-3d66.up.railway.app';
 
@@ -18,6 +19,31 @@ app.on('second-instance', () => { mainWindow?.show(); mainWindow?.focus(); });
 function applyApiKey(apiKey) {
   process.env.API_BASE_URL = API_BASE;
   process.env.API_KEY = apiKey || '';
+}
+
+function configureAutoUpdates() {
+  if (!app.isPackaged || process.platform !== 'win32') return;
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on('error', err => {
+    console.error('[updater] No se pudo comprobar o descargar una actualización:', err);
+  });
+  autoUpdater.on('update-downloaded', async () => {
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Actualización lista',
+      message: 'Hay una actualización descargada. Reinicia el Mostrador para instalarla.',
+      buttons: ['Reiniciar ahora', 'Más tarde'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (result.response === 0) autoUpdater.quitAndInstall();
+  });
+
+  autoUpdater.checkForUpdates().catch(err => {
+    console.error('[updater] No se pudo comprobar si hay una actualización:', err);
+  });
 }
 
 // ── IPC: configuración (misma X-API-Key que el sync-agent normal — se pide una vez y se
@@ -52,18 +78,27 @@ ipcMain.handle('mostrador-buscar', async (_, q) => {
   if (!process.env.API_KEY) return { ok: false, error: 'Configura primero la API Key' };
   try {
     const api = require('../src/api-client');
-    const resultados = await api.request(`/api/sync/publicitarios/mostrador/buscar?q=${encodeURIComponent(q || '')}`);
+    const query = encodeURIComponent(q || '');
+    const [receta, publicitarios] = await Promise.all([
+      api.request(`/api/sync/receta/mostrador/buscar?q=${query}`),
+      api.request(`/api/sync/publicitarios/mostrador/buscar?q=${query}`),
+    ]);
+    const resultados = [
+      ...receta.map(r => ({ ...r, universo: 'Receta' })),
+      ...publicitarios.map(r => ({ ...r, universo: 'Publicitarios' })),
+    ];
     return { ok: true, resultados };
   } catch (err) {
     return { ok: false, error: err.message };
   }
 });
 
-ipcMain.handle('mostrador-gp', async (_, cn) => {
+ipcMain.handle('mostrador-gp', async (_, cn, universo) => {
   if (!process.env.API_KEY) return { ok: false, error: 'Configura primero la API Key' };
   try {
     const api = require('../src/api-client');
-    const gps = await api.request(`/api/sync/publicitarios/gps?cn=${encodeURIComponent(cn)}`);
+    const tipo = universo === 'Receta' ? 'receta' : 'publicitarios';
+    const gps = await api.request(`/api/sync/${tipo}/gps?cn=${encodeURIComponent(cn)}`);
     return { ok: true, gp: gps[0] || null };
   } catch (err) {
     return { ok: false, error: err.message };
@@ -99,6 +134,7 @@ app.whenReady().then(() => {
   const cfg = store.get('config', {});
   if (cfg.apiKey) applyApiKey(cfg.apiKey);
   createWindow();
+  configureAutoUpdates();
 });
 
 app.on('window-all-closed', () => { app.quit(); });
